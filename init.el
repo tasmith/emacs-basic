@@ -469,6 +469,9 @@
         which-key-side-window-max-width 0.33
         which-key-idle-delay 0.05)
   :diminish which-key-mode)
+
+(use-package magit
+  :bind (("C-c g" . magit-file-dispatch)))
         
 ;;; init.el ends here
 
