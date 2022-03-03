@@ -30,6 +30,39 @@
 ;;  always runs before packages are loaded and ':config' runs after
 ;;  packages are loaded.
 
+;;; About key bindings
+;;
+;;  The use-package macro provides the handy :bind tag that can be
+;;  used to simplify key binding to commands. See examples throughout
+;;  the emacs lisp below. In Emacs, every keystroke is bound to the
+;;  invocation of an emacs function. Simply typing a character invokes
+;;  the function `self-insert' that inserts the corresponding character
+;;  into the current Emacs buffer at the point (i.e. where the cursor
+;;  is located. Any key (including modifiers, function keys, etc.) can
+;;  be bound to any of the appropriate available functions defined
+;;  by Emacs or the installed packages or the emacs lisp code loaded
+;;  during the current session (usually in the user's configuration
+;;  code). This makes Emacs the most flexible editing environment,
+;;  a construction kit that the user can program to do anything
+;;  a computer can do.
+;;
+;;  The default key-bindings for Emacs and its third-party packages
+;;  are ordinarily organized by convention:
+;;    -  C-x is reserved as a prefix for emacs key bound functions
+;;    -  C-c followed by C-<letter> is reserved for major modes.
+;;       Here <letter> means any alphabetic letter.
+;;    -  C-c followed by a letter is reserved for users own
+;;       keybindings, usually assigned in the user configuration.
+;;    -  The function keys F5 through F9 are reserved for users.
+;;  Although it is possible to rebind any key, some important keys
+;;  can't be rebound without ruining the Emacs user experience, so
+;;  especially don't be tempted to rebind the following.
+;;    - C-g is essential for canceling a partially entered, perhaps
+;;      miss-spelled or miss-keyed command.
+;;    - C-h can't be rebound without breaking the Emacs help system
+;;    - ESC is like C-g used to escape from actions that been completed.
+;;  
+
 ;;; Code:
 
 (package-initialize)
@@ -63,6 +96,9 @@
 ;;;; Tweak Emacs setting
 ;;;; a bunch of unnecessary but still useful changes
 
+;;; Greeting from scratch buffer
+(setq initial-scratch-message ";; Welcome to Todd's Emacs configuration\n")
+
 ;;; Revert buffers to actively reflect the content of files that have changed.
 (global-auto-revert-mode 1)
 ;; Do this for non-file buffers too, like dired buffers.
@@ -87,7 +123,7 @@
 (savehist-mode 1)
 (setq history-length 500)
 
-;; Save place to return to same location next time file is opened
+;; Save location of cursor to return to the next time the file is opened
 (save-place-mode 1)
 
 ;;; Backups and Autosave
@@ -104,9 +140,7 @@
   ;; Number the filenames of backup files (~17~ not just ~ suffix)
   version-control t
   ;; And make backups even of version controlled files
-  vc-make-backup-files t
-  ;; do auto-save every 30 seconds
-  auto-save-interval 30)
+  vc-make-backup-files t)
 
 (let ((my-auto-save-dir (expand-file-name "autosave/" user-emacs-directory))
       (my-backups-dir  (expand-file-name "backups/" user-emacs-directory)))
@@ -162,6 +196,9 @@
 ;;   - default for file name coding system
 ;;   - default for non-graphical termial output
 ;;   - default for non-graphical terminal keyboard input
+;; There are separate emacs functions for setting all
+;; of these preferences, but the single invocation
+;; below takes care of all of it.
 (prefer-coding-system 'utf-8)
 
 ;; Sentences don't need to end with two spaces
@@ -172,7 +209,7 @@
 (require 'uniquify)
 (setq uniquify-buffer-name-style 'forward)
 
-;; Ediff -- better settings I found in user Magnars Emacs configuration
+;; Ediff -- some better settings I found in user Magnars Emacs configuration
 (setq ediff-diff-options "-w"
       ediff-split-window-function 'split-window-horizontally
       ediff-window-setup-function 'ediff-setup-windows-plain)
@@ -223,7 +260,21 @@
 (use-package undo-tree
   :init (global-undo-tree-mode 1))
 
+;; Navigation between windows (i.e. panes)
+(windmove-default-keybindings)
+
 ;;; Visual appearance
+
+;; Fonts
+
+(let ((fonts (font-family-list)))
+  (cond
+   ((member "Hack Nerd Font" fonts)
+    (set-face-attribute 'default nil :font "Hack Nerd Font"))
+   ((member "GoMono Nerd Font" fonts)
+    (set-face-attribute 'default nil :font "GoMono Nerd Font"))
+   ((member "DaddyTimeMono NF" fonts)
+    (set-face-attribute 'default nil :font "DaddyTimeMono NF"))))
 
 ;; Add some icons
 (use-package all-the-icons)
@@ -239,10 +290,10 @@
   ;; customization before loading the themes
   (setq modus-themes-italic-constructs t
         modus-themes-bold-constructs t
-        modus-themes-region '(bg-only no-extend))
+        modus-themes-region '(accented no-extend))
   (modus-themes-load-themes)
   :config
-  ;; here, load the thems
+  ;; here, load the themes
   ;; (modus-themes-load-operandi)
   (modus-themes-load-vivendi)
   :bind ("<f5>" . modus-themes-toggle))
@@ -256,7 +307,7 @@
   (setq sml/theme 'light)
   (sml/setup))
 
-(use-package minions
+(use-package minions        :disabled  ;; hmmm...doesn't seem to be working, disable for now
   :config
   (minions-mode 1))
 
@@ -275,14 +326,8 @@
   (exec-path-from-shell-variables '("PATH"
                                     "MANPATH"
                                     "TMPDIR"
-                                    "KUBECONFIG"
                                     "GOPATH"
-                                    "GOBIN"
-                                    "GOROOT"
-                                    "GOPRIVATE"
-                                    "GOENV_GOPATH_PREFIX"
-                                    "GOENV_VERSION"
-                                    "MallocNanoZone"))
+                                    "GOBIN"))
   (exec-path-from-shell-arguments '("-l"))
   (exec-path-from-shell-check-startup-files nil)
   (exec-path-from-shell-debug nil)
@@ -470,9 +515,35 @@
         which-key-idle-delay 0.05)
   :diminish which-key-mode)
 
+;; the mighty magit
+
 (use-package magit
   :bind (("C-c g" . magit-file-dispatch)))
-        
+
+;; org mode the all powerful
+
+(use-package org
+  :config
+  (setq org-default-notes-file (expand-file-name "notes.org" org-directory))
+  (setq org-insert-mode-line-in-empty-file t)
+  :bind (("C-c o a" . org-agenda)
+         ("C-c o c" . org-capture)
+         ("C-c o l" . org-store-link))
+  )
+
+;; yasnippet
+
+(use-package yasnippet
+  :config
+  :hook ((emacs-lisp-mode . yas-minor-mode)
+         (org-mode . yas-minor-mode))
+  )
+
+(use-package yasnippet-snippets
+  :after yasnippet
+  :config
+  (yas-reload-all))
+
 ;;; init.el ends here
 
 
