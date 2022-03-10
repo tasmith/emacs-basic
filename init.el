@@ -1,17 +1,19 @@
 ;;; init.el --- Init File -*- lexical-binding: t -*-
 
+;;; Commentary:
 ;;  This file is loaded after early-init.el; the most significant difference
 ;;  is that early-init.el is loaded before downloaded and installed packages
 ;;  are made available to the Emacs session.
 
 ;;; About packages
 ;;
-;;  Once a package is downloaded and installed, it is made available to the
-;;  current Emacs session. Making a package available adds its directory to
-;;  load-path and loads its autoloads. This happens after early-init.el is
-;;  loaded and before processing init.el (this file). Note, however, that
-;;  when Emacs is started with the '-q' or '--no-init-file' options these
-;;  packages are not made available at startup.
+;;  Once a package is downloaded and installed, it is made available
+;;  to the current Emacs session. Making a package available adds its
+;;  directory to load-path and loads its autoloads. This happens after
+;;  early-init.el is loaded and before processing init.el (this file).
+;;  Note, however, that when Emacs is started with the '-q' or
+;;  '--no-init-file' options these packages are not made available at
+;;  startup.
 ;;
 ;;  Emacs can be kept from making packages available automatically by
 ;;  setting the variable 'package-enable-at-startup' to nil within
@@ -24,23 +26,28 @@
 ;;; About use-package
 ;;  
 ;;  use-package is a macro that makes organizing package configuration
-;;  neater and easier. 
+;;  neater and easier.
 ;;
 ;;  The two keywords ':init' and ':config' are similar, but ':init
 ;;  always runs before packages are loaded and ':config' runs after
-;;  packages are loaded.
+;;  packages are loaded. Packing loading happens for different
+;;  reasons. If a ':commands' entry is present in use-package, the
+;;  package loading will be defered until the command is used.
+;;  Likewise ':bind', ':bind*', ':bind-keymap', ':bind-keymap*',
+;;  ':mode', ':interpreter', ':hook', ':magic' and ':defer' all defer
+;;  package loading.
 
 ;;; About key bindings
 ;;
 ;;  The use-package macro provides the handy :bind tag that can be
 ;;  used to simplify key binding to commands. See examples throughout
-;;  the emacs lisp below. In Emacs, every keystroke is bound to the
-;;  invocation of an emacs function. Simply typing a character invokes
+;;  the Emacs Lisp below. In Emacs, every keystroke is bound to the
+;;  invocation of an Emacs function. Simply typing a character invokes
 ;;  the function `self-insert' that inserts the corresponding character
 ;;  into the current Emacs buffer at the point (i.e. where the cursor
 ;;  is located. Any key (including modifiers, function keys, etc.) can
 ;;  be bound to any of the appropriate available functions defined
-;;  by Emacs or the installed packages or the emacs lisp code loaded
+;;  by Emacs or the installed packages or the Emacs Lisp code loaded
 ;;  during the current session (usually in the user's configuration
 ;;  code). This makes Emacs the most flexible editing environment,
 ;;  a construction kit that the user can program to do anything
@@ -48,7 +55,7 @@
 ;;
 ;;  The default key-bindings for Emacs and its third-party packages
 ;;  are ordinarily organized by convention:
-;;    -  C-x is reserved as a prefix for emacs key bound functions
+;;    -  C-x is reserved as a prefix for Emacs key bound functions
 ;;    -  C-c followed by C-<letter> is reserved for major modes.
 ;;       Here <letter> means any alphabetic letter.
 ;;    -  C-c followed by a letter is reserved for users own
@@ -58,10 +65,14 @@
 ;;  can't be rebound without ruining the Emacs user experience, so
 ;;  especially don't be tempted to rebind the following.
 ;;    - C-g is essential for canceling a partially entered, perhaps
-;;      miss-spelled or miss-keyed command.
+;;      misspelled or mistyped command.
 ;;    - C-h can't be rebound without breaking the Emacs help system
-;;    - ESC is like C-g used to escape from actions that been completed.
-;;  
+;;    - ESC is used on terminals where meta (alt) key is not available.
+;;      (ESC-x is synonymous with M-x) Further, the sequence ESC ESC ESC
+;;      can be used to escape from the current state of Emacs. For
+;;      example to escape from a query-replace command or incremental
+;;      search or from entering a parameter in the mini-buffer or even
+;;      to escape back to single window mode!
 
 ;;; Code:
 
@@ -69,7 +80,7 @@
 
 ;;; Customize settings
 ;; Override the default location for storing settings made though
-;; the emacs 'M-x customize' commands. 
+;; the Emacs 'M-x customize' commands.
 
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (when (file-exists-p custom-file)
@@ -101,8 +112,6 @@
 
 ;;; Revert buffers to actively reflect the content of files that have changed.
 (global-auto-revert-mode 1)
-;; Do this for non-file buffers too, like dired buffers.
-(setq global-auto-revert-non-file-buffers t)
 
 ;; Indent with spaces not tabs by default.
 (setq-default indent-tabs-mode nil)
@@ -116,8 +125,8 @@
 ;; Selections are deleted with a keypress
 (delete-selection-mode 1)
 
-;;; Turn on recentf, use 'recentf-open-files' 
-(recentf-mode 1)  
+;;; Turn on recentf, use 'recentf-open-files'
+(recentf-mode 1)
 
 ;;; Minibuffer command history mode, use 'M-p', 'M-n', etc.
 (savehist-mode 1)
@@ -128,7 +137,7 @@
 
 ;;; Backups and Autosave
 ;;; Don't scatter the files around in every location,
-;;; just keep them centralized in hidden directories within 
+;;; just keep them centralized in hidden directories within
 ;;; the home directory.
 
 ;;; Backups and Autosave
@@ -145,7 +154,7 @@
 (let ((my-auto-save-dir (expand-file-name "autosave/" user-emacs-directory))
       (my-backups-dir  (expand-file-name "backups/" user-emacs-directory)))
 
-  ;; create the dirs if necessary, since emacs won't
+  ;; create the dirs if necessary, since Emacs won't
   (unless (file-directory-p my-auto-save-dir)
     (make-directory my-auto-save-dir t))
   (unless (file-directory-p my-backups-dir)
@@ -188,15 +197,15 @@
 (setq echo-keystrokes 0.1)
 
 ;; UTF-8 is my prefered coding system everywhere so I can
-;; use the simple 'prefer-coding-system' setting that  
+;; use the simple 'prefer-coding-system' setting that
 ;; Givs UTF-8 highest priority for automatic detection
-;; and sets UTF-8 as default for 
+;; and sets UTF-8 as default for
 ;;   - coding system of new buffers
 ;;   - coding system for subprocess I/O
 ;;   - default for file name coding system
 ;;   - default for non-graphical termial output
 ;;   - default for non-graphical terminal keyboard input
-;; There are separate emacs functions for setting all
+;; There are separate Emacs functions for setting all
 ;; of these preferences, but the single invocation
 ;; below takes care of all of it.
 (prefer-coding-system 'utf-8)
@@ -210,9 +219,11 @@
 (setq uniquify-buffer-name-style 'forward)
 
 ;; Ediff -- some better settings I found in user Magnars Emacs configuration
-(setq ediff-diff-options "-w"
-      ediff-split-window-function 'split-window-horizontally
-      ediff-window-setup-function 'ediff-setup-windows-plain)
+(use-package ediff
+  :commands (magit-status projectile-vc)
+  :config
+  (setq ediff-diff-options "-w"
+        ediff-split-window-function 'split-window-horizontally))
 
 ;; Electric indent mode doesn't work in python-mode or org-mode
 ;; properly: hitting return can cause previous line to be reindented.
@@ -223,18 +234,19 @@
 ;; a certain depth is reached, make it a big depth
 (setq eval-expression-print-level 100)
 
-;; Magic to improve scrolling experience
+;; These settings are purported to improve aspects of the scrolling experience
 (setq auto-window-vscroll nil             ; don't automatically scroll to view tall lines
       fast-but-imprecise-scrolling t      ; don't fontify portions of buffer scrolled past
       scroll-conservatively 101           ; scroll upto 101 lines to bring point into view
       scroll-margin 1                     ; leave 1 line buffer between point and buffer top/bottom
-      scroll-preserve-screen-position t)  ; e.g. moving by full screens keeps point at same screen location
+      scroll-preserve-screen-position t)  ; e.g. moving by full screens keeps
+                                          ; point at same screen location
 
 (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)) ; one line at a time
       mouse-wheel-follow-mouse 't)                ; scroll window under mouse
 
 ;; Settings for long line support and simpler bi-directional operation.
-;; I hope these two simplifying assignments make emacs faster
+;; I hope these two simplifying assignments make Emacs faster
 
 ;; don't try to figure out direction
 ;; and inhibit bidi-parentheses algorithm
@@ -244,8 +256,12 @@
 ;; Make Shebang files executable when saved so I don't need to chmod.
 (add-hook 'after-save-hook #'executable-make-buffer-file-executable-if-script-p)
 
-;; Useful packages 
+;; Useful packages
 
+;; Project commands
+;; ... defaults might be modified here
+;; see which key after C-x p
+  
 ;; Install screencast support; try it with keycast-mode
 (use-package keycast)
 
@@ -261,7 +277,11 @@
   :init (global-undo-tree-mode 1))
 
 ;; Navigation between windows (i.e. panes)
-(windmove-default-keybindings)
+(use-package windmove
+  :bind (("<S-left>"  . windmove-left)
+         ("<S-right>" . windmove-right)
+         ("<S-up>"    . windmove-up)
+         ("<S-down>"  . windmove-down)))
 
 ;;; Visual appearance
 
@@ -285,9 +305,8 @@
 (use-package doom-themes)
 (use-package solarized-theme)
 (use-package modus-themes
-  :ensure
   :init
-  ;; customization before loading the themes
+  ;; set these values before loading the themes
   (setq modus-themes-italic-constructs t
         modus-themes-bold-constructs t
         modus-themes-region '(accented no-extend))
@@ -307,8 +326,8 @@
   (setq sml/theme 'light)
   (sml/setup))
 
-(use-package minions        :disabled  ;; hmmm...doesn't seem to be working, disable for now
-  :config
+(use-package minions        ;; hmmm...is this working?
+  :init
   (minions-mode 1))
 
 ;;; Nice visible bell
@@ -320,14 +339,13 @@
 ;;; Highlight current line
 (global-hl-line-mode 1)
 
-;;; environment variables from shell 
+;;; environment variables from shell
 (use-package exec-path-from-shell     :disabled
   :custom
   (exec-path-from-shell-variables '("PATH"
                                     "MANPATH"
                                     "TMPDIR"
-                                    "GOPATH"
-                                    "GOBIN"))
+                                    "GOPATH"))
   (exec-path-from-shell-arguments '("-l"))
   (exec-path-from-shell-check-startup-files nil)
   (exec-path-from-shell-debug nil)
@@ -339,19 +357,12 @@
 ;;; Completion
 
 (use-package vertico
-  :config (vertico-mode 1))
-
-(use-package vertico-directory
-  :after vertico   :ensure nil
+  :init (vertico-mode 1)
   :bind (:map vertico-map
               ("RET" .   vertico-directory-enter)
               ("DEL" .   vertico-directory-delete-char)
               ("M-DEL" . vertico-directory-delete-word)
-              ("C-l" .   vertico-directory-up)))
-
-(use-package vertico-quick
-  :after vertico   :ensure nil
-  :bind (:map vertico-map
+              ("C-l" .   vertico-directory-up)
               ("M-q" . vertico-quick-insert)
               ("C-q" . vertico-quick-exit)))
 
@@ -451,8 +462,8 @@
   (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
 
   ;; Use Consult to select xref locations with preview
-  (setq xref-show-xrefs-function #'consult-xref
-        xref-show-definitions-function #'consult-xref)
+  ;; (setq xref-show-xrefs-function #'consult-xref
+  ;;      xref-show-definitions-function #'consult-xref)
 
   ;; Configure other variables and modes in the :config section,
   ;; after lazily loading the package.
@@ -528,22 +539,92 @@
   (setq org-insert-mode-line-in-empty-file t)
   :bind (("C-c o a" . org-agenda)
          ("C-c o c" . org-capture)
-         ("C-c o l" . org-store-link))
-  )
+         ("C-c o l" . org-store-link)))
 
 ;; yasnippet
 
 (use-package yasnippet
-  :config
+  :init
+  (yas-global-mode 1)
   :hook ((emacs-lisp-mode . yas-minor-mode)
-         (org-mode . yas-minor-mode))
-  )
+         (org-mode . yas-minor-mode)))
 
 (use-package yasnippet-snippets
-  :after yasnippet
-  :config
-  (yas-reload-all))
+  :after yasnippet)
+
+;; lsp
+
+(use-package lsp-mode
+  :commands lsp)
+
+;; corfu -- a completion at point
+
+(use-package corfu
+  :init
+  (corfu-global-mode))
+
+;; Add extensions
+(use-package cape
+  ;; Bind dedicated completion commands
+  :bind (("C-c p p" . completion-at-point) ;; capf
+         ("C-c p t" . complete-tag)        ;; etags
+         ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
+         ("C-c p f" . cape-file)
+         ("C-c p k" . cape-keyword)
+         ("C-c p s" . cape-symbol)
+         ("C-c p a" . cape-abbrev)
+         ("C-c p i" . cape-ispell)
+         ("C-c p l" . cape-line)
+         ("C-c p w" . cape-dict)
+         ("C-c p \\" . cape-tex)
+         ("C-c p _" . cape-tex)
+         ("C-c p ^" . cape-tex)
+         ("C-c p &" . cape-sgml)
+         ("C-c p r" . cape-rfc1345))
+  :init
+  ;; Add `completion-at-point-functions', used by `completion-at-point'.
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-tex)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-keyword)
+  ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
+  ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
+  ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
+  ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
+  ;;(add-to-list 'completion-at-point-functions #'cape-dict)
+  ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
+  ;;(add-to-list 'completion-at-point-functions #'cape-line)
+)
+
+;; company -- shou I be using company instead of corfu? Does corfu work with gopls fo go-mode?
+
+;; go-mode
+
+(use-package go-mode
+  :mode (("\\.go\\'" . go-mode))  ; \\' matches end of string
+  :hook ((go-mode . lsp)
+         (go-mode . yas-minor-mode)
+         (go-mode . (lambda() (setq tab-width 4)))
+         (before-save . lsp-format-buffer)
+         (before-save . lsp-organize-imports)))
+
+;; flycheck
+;; https://www.flycheck.org/en/latest/index.html
+;; https://www.masteringemacs.org/article/spotlight-flycheck-a-flymake-replacement
+
+(use-package flycheck
+  :init (global-flycheck-mode 1))
+
+;; flyspell
+;; http://www-sop.inria.fr/members/Manuel.Serrano/flyspell/flyspell.html
+
+(use-package flyspell
+  :hook (text-mode . flyspell-mode)
+  :config (setq ispell-program-name "aspell"))
+
+;; docview
+;; Improve sharpness of docview
+
+(setq-default doc-view-resolution 300)
 
 ;;; init.el ends here
-
-
