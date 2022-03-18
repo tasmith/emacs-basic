@@ -340,19 +340,19 @@
 (global-hl-line-mode 1)
 
 ;;; environment variables from shell
-(use-package exec-path-from-shell     :disabled
+(use-package exec-path-from-shell
   :custom
   (exec-path-from-shell-variables '("PATH"
                                     "MANPATH"
                                     "TMPDIR"
                                     "GOPATH"))
   (exec-path-from-shell-arguments '("-l"))
-  (exec-path-from-shell-check-startup-files nil)
-  (exec-path-from-shell-debug nil)
-
+  ;; (exec-path-from-shell-check-startup-files nil)
+  ;; (exec-path-from-shell-debug nil)
+  
+  :if (memq window-system '(mac ns x pgtk))
   :config
-  (when (memq window-system '(mac ns x pgtk))
-    (exec-path-from-shell-initialize)))
+  (exec-path-from-shell-initialize))
 
 ;;; Completion
 
@@ -393,6 +393,7 @@
                  (window-parameters (mode-line-format . none)))))
 
 (use-package consult
+  :functions consult--customize-set                ;; silence fly-check warning about undefined function
   ;; Replace bindings. Lazily loaded due by `use-package'.
   :bind (;; C-c bindings (mode-specific-map)
          ("C-c h" . consult-history)
